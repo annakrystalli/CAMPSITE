@@ -4,8 +4,8 @@ Version: 0.0.0.9000
 Authors@R: 
     c(person("Alex", "Slavenko", , "gluttony14@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "")),
-      person("Anna", "Krystalli", , "annakrystalli@googlemail.com", role = "ctb",
-           comment = c(ORCID = "0000-0002-2378-4915")),     )
+      person("Anna", "Krystalli", , "annakrystalli@googlemail.com", role = "aut",
+           comment = c(ORCID = "0000-0002-2378-4915")))
 Description: What the package does (one paragraph).
 Imports: 
     adephylo,
