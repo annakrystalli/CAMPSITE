@@ -1,8 +1,6 @@
-library(tidyverse)
-library(phytools)
-library(motmot)
-library(RPANDA)
-source("code/support functions.R")
+empirical <- function(variables) {
+  
+
 
 clades <- str_remove(dir("empirical/data/"), ".csv")
 
@@ -33,3 +31,5 @@ for(i in 1:length(clades)){
 
 sum.tab$clade <- clades
 sum.tab %>% write_csv("output/empirical.csv")
+
+}
