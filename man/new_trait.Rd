@@ -7,7 +7,7 @@
 new_trait(
   lin_id = integer(1),
   status = integer(1),
-  parent_id = integer(1),
+  relative_id = integer(1),
   parent_trait_value = numeric(1),
   trait_values = numeric()
 )
@@ -17,7 +17,9 @@ new_trait(
 
 \item{status}{status (incipient=-1/good=1/extinct=-2)}
 
-\item{parent_id}{parental node (lineage number)}
+\item{relative_id}{relative node (lineage number). If trait is associated with incipient
+lineage, \code{relative_id} indicates the parent lineage. if trait is associated with
+good lineage, \code{relative_id} indicates the daughter lineage.}
 
 \item{trait_values}{current trait value of parental lineage, and all consecutive
 elements contain trait value at each time step (always \code{root.value} at the beginning)}

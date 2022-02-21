@@ -6,22 +6,24 @@
 #' An object of class "trait" with the following values
 #' @param lin_id lineage identifying number
 #' @param status status (incipient=-1/good=1/extinct=-2)
-#' @param parent_id parental node (lineage number)
+#' @param relative_id relative node (lineage number). If trait is associated with incipient 
+#' lineage, `relative_id` indicates the parent lineage. if trait is associated with 
+#' good lineage, `relative_id` indicates the daughter lineage.
 #' @param trait_values current trait value of parental lineage, and all consecutive 
 #' elements contain trait value at each time step (always `root.value` at the beginning)
 #' @export
 #' @examples
 #' new_trait(1, 1, 2, c(NA, root.value))
-new_trait <- function(lin_id = integer(1), status = integer(1), parent_id = integer(1), 
+new_trait <- function(lin_id = integer(1), status = integer(1), relative_id = integer(1), 
                       parent_trait_value = numeric(1), trait_values = numeric()) {
   checkmate::assert_numeric(lin_id, len = 1)
   checkmate::assert_numeric(status, len = 1)
-  checkmate::assert_numeric(parent_id, len = 1)
+  checkmate::assert_numeric(relative_id, len = 1)
   checkmate::assert_numeric(parent_trait_value, len = 1)
   checkmate::assert_numeric(trait_values)
   
-  x <- list(lin_id, status, parent_id, parent_trait_value, trait_values)
-  names(x) <- c("lin_id", "status", "parent_id", "parent_trait_value", "trait_values")
+  x <- list(lin_id, status, relative_id, parent_trait_value, trait_values)
+  names(x) <- c("lin_id", "status", "relative_id", "parent_trait_value", "trait_values")
   structure(x, class = "cs_trait")
 
   
@@ -214,7 +216,7 @@ traits_find_daughters <- function(traits, lin_id, format = c("int", "lin_id")) {
  format <- match.arg(format)
   
   daughters <- names(traits)[sapply(traits, 
-                       function(x) (x[["parent_id"]]) == lin_id_to_int(lin_id))]
+                       function(x) (x[["relative_id"]]) == lin_id_to_int(lin_id))]
   if (format == "int") {
     return(lin_id_to_int(daughters))}else{
       return(daughters)

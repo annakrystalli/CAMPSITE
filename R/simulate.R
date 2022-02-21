@@ -32,7 +32,7 @@ cs_evolve_inc_lineage <- function(pars, lin_id, step.size, t) {
   
   #cur_trait_value <- current_trait_value(trait)
   
-  parent_trait <- e$traits[[trait$parent_id]]
+  parent_trait <- e$traits[[trait$relative_id]]
   trait$parent_trait_value <- current_trait_value(parent_trait) # update current trait of parental lineage
   
   lambda2 <-  calc_lamda2(trait, pars$tau0, pars$beta)
@@ -97,7 +97,7 @@ cs_evolve_good_lineage <- function(pars, lin_id, step.size, t) {
       e$traits[[lineage_last_parent(e$lineages)]] <- new_trait(lin_id = lin_id_to_int(lineage_last_parent(e$lineages)), 
                                                                status = 1, 
                                                                # because this is parental, store number of daughter lineage 
-                                                               parent_id = lin_id_to_int(lineage_last_incipient(e$lineages)), 
+                                                               relative_id = lin_id_to_int(lineage_last_incipient(e$lineages)), 
                                                                parent_trait_value = NA, #trait value for parent lineage
                                                                #trait values for all previous time steps (NA since it didn't exist)
                                                                #trait value for next time step (trait of parent lineage)
@@ -107,7 +107,7 @@ cs_evolve_good_lineage <- function(pars, lin_id, step.size, t) {
       e$traits[[lineage_last_incipient(e$lineages)]] <- new_trait(lin_id = lin_id_to_int(lineage_last_incipient(e$lineages)), 
                                                                   status = -1, 
                                                                   # because this is parental, store number of parent lineage 
-                                                                  parent_id = lin_id_to_int(lineage_last_parent(e$lineages)), 
+                                                                  relative_id = lin_id_to_int(lineage_last_parent(e$lineages)), 
                                                                   parent_trait_value = current_trait_value(trait), #trait value for parent lineage
                                                                   #trait values for all previous time steps (NA since it didn't exist)
                                                                   #trait value for next time step (trait of parent lineage)
@@ -120,7 +120,7 @@ cs_evolve_good_lineage <- function(pars, lin_id, step.size, t) {
       if (length(daughters) > 0) {
         for (daughter in daughters) {
           # update parental lineage number to its new number
-          e$traits[[daughter]]$parent_id <- lin_id_to_int(lineage_last_parent(e$lineages))
+          e$traits[[daughter]]$relative_id <- lin_id_to_int(lineage_last_parent(e$lineages))
         }
       }
     }
@@ -129,7 +129,7 @@ cs_evolve_good_lineage <- function(pars, lin_id, step.size, t) {
       e$lineages[lin_id, c("end_time", "status", "spec_or_ext_ct")] <- c(e$t, -2, e$t) #update lineage status to extinct in lineage matrix, update ending time and extinction time
       e$traits[[lin_id]]$status <- -2 #update lineage status to extinct in trait list
       
-      daughter <- e$traits[[lin_id]]$parent_id #find daughter lineage of extinct lineage
+      daughter <- e$traits[[lin_id]]$relative_id #find daughter lineage of extinct lineage
       if (e$lineages[daughter, "status"] == -1) { #if daughter is incipient & alive, becomes good:
         e$lineages[daughter, c("status", "spec_or_ext_ct", "spec_ct")] <- c(1, e$t, e$t) #update daughter lineage status to good in lineage matrix, update speciation completion times
         e$traits[[daughter]]$status <- 1 #update daughter lineage status to good in trait list
