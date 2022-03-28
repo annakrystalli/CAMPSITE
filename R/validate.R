@@ -1,4 +1,4 @@
-#' @export
+
 validate_bounds <- function(bounds, root.value) {
   
   checkmate::assert_numeric(bounds, len = 2)
@@ -8,14 +8,14 @@ validate_bounds <- function(bounds, root.value) {
   }
   
 }
-#' @export
+
 validate_ou <- function(ou) {
   
   checkmate::assert_list(ou)
   checkmate::assert_subset(names(ou), choices = c("opt", "alpha4"))
   
   if(is.null(ou$opt)){
-    usethis::ui_info("no OU parameters supplied; continuing simulation")
+    usethis::ui_warn("no OU parameters supplied; continuing without OU process")
     ou$alpha4 <- 0
     return(ou)
   }
