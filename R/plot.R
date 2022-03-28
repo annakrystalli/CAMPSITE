@@ -321,7 +321,7 @@ plot_diversification <- function(x) {
   
 }
 
-
+# ---- PLOT Data - preprocess ---- ############################################
 
 prep_time_plot_df <- function(x, variable = "VAR") {
   
@@ -330,17 +330,11 @@ prep_time_plot_df <- function(x, variable = "VAR") {
                    competition = as.factor(x$competition),
                    selection = as.factor(x$selection))
   
-  df$time_step <- seq_along(df$var) * x$step_size
+  df$time_step <- seq_along(df$variable) * x$step_size
   df$time_int <- as.integer(df$time_step)
   
   return(df)
 }
-
-
-
-
-
-
 
 prep_lineages_div <- function(x) {
   
