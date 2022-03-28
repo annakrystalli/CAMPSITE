@@ -8,26 +8,31 @@ Authors@R:
            comment = c(ORCID = "0000-0002-2378-4915")))
 Description: What the package does (one paragraph).
 Imports: 
-    adephylo,
     ape,
-    apTreeshape,
     checkmate,
-    cowplot,
     doParallel,
-    e1071,
-    foreach,
-    geiger,
-    ggpubr,
-    harrypotter,
-    Hmisc,
-    motmot,
-    paleotree,
-    phytools,
-    rlang,
     RPANDA,
+    motmot,
+    foreach,
+    phytools,
+    harrypotter,
+    ggplot2,
+    ggpubr,
     stringr,
-    tidyverse,
-    usethis
+    usethis,
+    magrittr,
+    tidyr,
+    dplyr,
+    tibble,
+    adephylo,
+    paleotree
+Suggests: 
+    cowplot,
+    geiger,
+    Hmisc,
+    apTreeshape,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
 Remotes: 
     kassambara/ggpubr
 License: MIT + file LICENSE
