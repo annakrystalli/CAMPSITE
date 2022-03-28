@@ -71,8 +71,8 @@ cs_simulate <- function (pars, ou = list(opt = NULL, alpha4 = NULL), root.value 
     
     
     #simulate new trait value for each lineage:
-    e$traits <- cs_sim_next_trait_value(traits = e$traits, e$active_lineages, e$trait_diff_m, ou, 
-                                        params, bounds)
+    e$traits <- cs_sim_next_trait_value(traits = e$traits, e$active_lineages, e$trait_diff_m, ou = ou, 
+                                        pars = pars, bounds = bounds, step_size = step_size)
     
     for (lineage in e$active_lineages) {
       
@@ -129,51 +129,4 @@ cs_simulate <- function (pars, ou = list(opt = NULL, alpha4 = NULL), root.value 
                      full_results = FALSE, end_active_lineages = TRUE) 
     ) 
   }
-}
-
-
-
-
-
-runCAMPSITE <- function(comp, selec){
-  
-  
-  
-  cores = detectCores()
-  cl <- makeCluster(cores[1]-1) #not to overload your computer
-  registerDoParallel(cl)
-  set.seed(42)
-  sim <- foreach(i=1:100, .packages = c("ape")) %dopar% {
-    repeat {
-      model <- sim_CAMPSITE(pars = c(0.25,
-                                     0.01,
-                                     0.6,
-                                     0.2,
-                                     0.2,
-                                     0.01,
-                                     0.4,
-                                     0.4,
-                                     0.02,
-                                     comp,
-                                     comp,
-                                     selec,
-                                     0.5,
-                                     20),
-                            ou = list(c(0),
-                                      c(selec)),
-                            bounds = c(-Inf,
-                                       Inf),
-                            root.value = 0,
-                            age.max = 50,
-                            step_size = 0.01,
-                            full_results = T,
-                            plot = F
-      )
-      if (!isTRUE(model$gsp_extant$tree == c("process died")) && model$gsp_extant$tree$Nnode > 4) {break}
-    }
-    model
-  }
-  stopCluster(cl)
-  saveRDS(sim, paste("output/sims/comp", comp, "_selec", selec, ".rds", sep = ""))
-  rm(sim)
 }
