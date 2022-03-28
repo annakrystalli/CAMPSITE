@@ -1,3 +1,72 @@
+#' Summarise results of CAMPSITE simulation
+#'
+#' @param x results object of class `"cs_sim_results"` output from `cs_simulate()` 
+#' or list of `"cs_sim_results"` objects.
+#' @param max_trait_len length each trait vector should be expanded by. 
+#'
+#' @return an object (if `x` is `"cs_sim_results"` object) or list objects 
+#' (if `x` is list of `"cs_sim_results"` objects) of class `cs_result_summaries` containing:
+#' - `lineages`: object of class `cs_lineages`.
+#' - `VAR`: variance of trait values across all lineages at each time step
+#' - `MNND`: Mean Nearest Neighbour Distance of trait values across all lineages at each time step.
+#' - `VNND`: Variance of Nearest Neighbour Distance of trait values across all lineages at each time step.
+#' - `tip_traits`: tip trait values of extant lineages
+#' - `Nnode_extant`: extant tree number of nodes
+#' - `tree_extant`: object of class `phylo` containing extant lineages only
+#' - `tree_fossil`: object of class `phylo` containing tree that excludes incomplete lineages
+#' @export
+cs_summarise_results <- function(x, max_trait_len = NULL){
+  
+  if(inherits(x, "cs_sim_results")){
+    return(cs_summarise_result(x, max_trait_len))
+  }
+
+  res_class <- sapply(x, FUN = function(i){inherits(i, "cs_sim_results")})
+  res_class_n <- sum(res_class)
+  
+  
+  if(sum(!res_class) == length(x)){
+    usethis::ui_stop("No objects of class cs_sim_results in {usethis::ui_field('x')}")
+  }
+  
+  if(res_class_n != length(x)){
+    usethis::ui_warn("{res_class_n} of {length(x)} elements of {usethis::ui_field('x')} not objects of class cs_sim_results. Ignored")
+  }
+  
+  return(
+    lapply(x[res_class], function(i){
+      cs_summarise_result(i, max_trait_len)})
+  )
+}
+
+
+cs_summarise_result <- function(x,  max_trait_len = NULL) {
+  checkmate::assert_class(x, "cs_sim_results")
+  
+  traits_mat <- traits_compile_values_matrix(x$traits,
+                                             max_trait_len = max_trait_len)
+  
+  summaries <- list(
+    lineages = x$lineages,
+    VAR = apply(traits_mat, 2, var, na.rm = TRUE),
+    MNND = apply(traits_mat, 2, MNND),
+    VNND = apply(traits_mat, 2, VNND),
+    tip_traits = x$trees$gsp_extant$tips,
+    Nnode_extant = x$trees$gsp_extant$tree$Nnode,
+    tree_extant = x$trees$gsp_extant$tree,
+    tree_fossil = x$trees$gsp_fossil$tree,
+    competition = x$pars$alpha1,
+    selection = x$pars$alpha3,
+    t_end = x$t_end,
+    step_size = x$step_size
+    
+  )
+  ## Set the name for the class
+  class(summaries) <- append(class(summaries),"cs_result_summaries")
+  return(summaries)
+}
+
+
 MNND <- function(x){
   a <- x[!is.na(x)]
   if(length(a) > 1){
@@ -18,62 +87,29 @@ VNND <- function(x){
   else(return(0))
 }
 
-sumModels <- function(model){
-  result1 <- model$all$lin_mat
-  trait_df <- list()
-  for (k in 1:length(model$all$trait_mat)){
-    trait_df[[k]] <- model$all$trait_mat[[k]]
-    trait_df[[k]] <- trait_df[[k]][5:length(trait_df[[k]])]
-    length(trait_df[[k]]) <- 5000
-    names(trait_df[[k]]) <- c(1:5000)
-  }
-  trait_df <- matrix(unlist(trait_df), ncol = 5000, byrow = TRUE)
-  result2 <- apply(trait_df, 2, var, na.rm = TRUE)
-  result3 <- apply(trait_df, 2, MNND)
-  result4 <- model$gsp_extant$tips
-  result5 <- model$gsp_extant$tree$Nnode
-  result6 <- model$gsp_extant$tree
-  result7 <- model$gsp_fossil$tree
-  result8 <- apply(trait_df, 2, VNND)
-  me <- list(
-    lineages = result1,
-    traits = result2,
-    MNND = result3,
-    tip_traits = result4,
-    Nnode_extant = result5,
-    tree_extant = result6,
-    tree_fossil = result7,
-    VNND = result8
-  )
-  ## Set the name for the class
-  class(me) <- append(class(me),"multiResultClass")
-  return(me)
-}
-
-tipTraitPlot <- function(tip_traits, comp, selec){
-  n.obs <- sapply(tip_traits, length)
-  seq.max <- seq_len(max(n.obs))
-  tip_traits_df <- as_tibble(sapply(tip_traits, "[", i = seq.max))
-  colnames(tip_traits_df) <- c(1:100)
-  tip_traits_df <- add_column(tip_traits_df,
-                              competition = comp,
-                              selection = selec)
-  tip_traits_df
-}
-
 sumBL <- function(x){
-  max.bl <- max(distRoot(x, method = "patristic"))
+  tree <- x$tree_fossil
+  max.bl <- max(adephylo::distRoot(tree, method = "patristic"))
+  
   bl <- numeric()
-  for (i in 0:(max.bl-1)){
-    if(i < round(max.bl-1)) bl[[i+1]] <- sum(distRoot(timeSliceTree(x, i, plot = F), method = "patristic")) -
-        sum(distRoot(timeSliceTree(x, i+1, plot = F), method = "patristic"))
-    else bl[[i+1]] <- sum(distRoot(timeSliceTree(x, i, plot = F), method = "patristic")) + 1*(ceiling(max.bl)-max.bl)
+  for (i in 0:(max.bl - 1)){
+    if (i < round(max.bl - 1)) {
+      bl[[i + 1]] <- sum(adephylo::distRoot(
+        paleotree::timeSliceTree(tree, i, plot = F), method = "patristic")) -
+        sum(adephylo::distRoot(paleotree::timeSliceTree(tree, i + 1, plot = F), 
+                               method = "patristic"))
+    } else {
+      bl[[i+1]] <- sum(adephylo::distRoot(paleotree::timeSliceTree(tree, i, plot = F),
+                                          method = "patristic")) + 1*(ceiling(max.bl)-max.bl)
+    }
   }
-  length(bl) <- 50
+  
   bl[is.na(bl)] <- 1
-  return(data.frame(c(1:50),
-                    rev(bl)))
+  
+  return(data.frame(time_bin = seq_along(bl),
+                    branch_len = rev(bl)))
 }
+
 
 extractSignal <- function(model, method = c("K", "lambda")){
   tree <- model$tree_extant
