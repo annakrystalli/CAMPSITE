@@ -1,16 +1,17 @@
 
 cs_sim_next_trait_value  <- function(traits, active_lineages, trait_diff, ou, 
-                                     params, bounds) {
+                                     pars, bounds, step_size) {
   
   trait_diff_sgn <- cs_trait_diff_sgn(trait_diff)
   n_lineages <- length(active_lineages)
   
   for (i in 1:n_lineages) {
-    lin_i <- active_lineages[i]
-    sign_t <- trait_diff_sgn[i, -i] 
-    diff_t <- trait_diff[i, -i]
+    lin_id <- active_lineages[i]
+    lin_i <- which(colnames(trait_diff) == lin_id)
+    sign_t <- trait_diff_sgn[lin_i, -lin_i] 
+    diff_t <- trait_diff[lin_i, -lin_i]
     
-    trait_values <- traits[[lin_i]]$trait_values
+    trait_values <- traits[[lin_id]]$trait_values
     current_trait_value <- tail(trait_values, 1)
     
     next_trait_value <- evolve_trait(x = current_trait_value, alpha2 = pars$alpha2, 
@@ -18,9 +19,9 @@ cs_sim_next_trait_value  <- function(traits, active_lineages, trait_diff, ou,
     
     if(!is.null(ou$opt)){
       next_trait_value <- add_ou_effect(x1 = next_trait_value, x0 = current_trait_value, opt= ou$opt, 
-                                        alpha4 = ou$alpha4, step_size)
+                                        alpha4 = ou$alpha4, step_size = step_size)
     }
-    traits[[lin_i]]$trait_values <- c(trait_values, next_trait_value)
+    traits[[lin_id]]$trait_values <- c(trait_values, next_trait_value)
   }
   traits
 }
@@ -212,7 +213,7 @@ evolve_trait <- function(x, alpha2, m, s, opt, sign_t, diff_t, bounds) {
 #calculate distance of current trait value from bounds & calculate the bound effect
 # this is added to the simulated trait value to make sure the trait is kept inside the bounds  
 boundary_effect <- function(x, bounds) {
-  bound_effect <- 3 * sum(sign(x - bounds) * exp(-2 * (x - bounds)^2)) # 
+  3 * sum(sign(x - bounds) * exp(-2 * (x - bounds)^2)) 
 }
 
 # add selection element where the trait value is pulled towards the optima based 
