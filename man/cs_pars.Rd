@@ -52,7 +52,7 @@ cs_pars(
 
 \item{s}{variance of BM per step size}
 
-\item{step.size}{size of step of BM}
+\item{step_size}{size of step of BM}
 
 \item{age.max}{maximum age}
 }

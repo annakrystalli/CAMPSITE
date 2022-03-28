@@ -1,4 +1,4 @@
-#' @export
+
 cs_sim_next_trait_value  <- function(traits, active_lineages, trait_diff, ou, 
                                      params, bounds) {
   
@@ -18,15 +18,15 @@ cs_sim_next_trait_value  <- function(traits, active_lineages, trait_diff, ou,
     
     if(!is.null(ou$opt)){
       next_trait_value <- add_ou_effect(x1 = next_trait_value, x0 = current_trait_value, opt= ou$opt, 
-                                        alpha4 = ou$alpha4, step.size)
+                                        alpha4 = ou$alpha4, step_size)
     }
     traits[[lin_i]]$trait_values <- c(trait_values, next_trait_value)
   }
   traits
 }
 
-#' @export
-cs_evolve_inc_lineage <- function(pars, lin_id, step.size, t) {
+
+cs_evolve_inc_lineage <- function(pars, lin_id, step_size, t, e) {
   trait <- e$traits[[lin_id]]
   stopifnot(trait$status == -1)
   
@@ -43,7 +43,7 @@ cs_evolve_inc_lineage <- function(pars, lin_id, step.size, t) {
   
   probs_i <- calc_probs(mui, lambda2)
   
-  if (cease_state(lambda2, mui, step.size)) { 
+  if (cease_state(lambda2, mui, step_size)) { 
     event <- sample(1:2, size = 1, prob = probs_i)
     if (event == 1) { #speciation completed
       # update lineage status to good in lineage matrix, update speciation completion times
@@ -57,16 +57,17 @@ cs_evolve_inc_lineage <- function(pars, lin_id, step.size, t) {
       e$lineages[lin_id, c("end_time", "status", "spec_or_ext_ct")] <- c(t, -2, t) 
       # update lineage status to extinct in trait list
       trait$status <- - 2
-      e$dead_lin <- c(e$dead_lin, i) #update vector of non-active lineages in time step
     }
   }
   e$traits[[lin_id]] <- trait
+  e$dead_lin <- lineages_dead(e$lineages)
+  return(e)
  
 }
 
 
-#' @export
-cs_evolve_good_lineage <- function(pars, lin_id, step.size, t) {
+
+cs_evolve_good_lineage <- function(pars, lin_id, step_size, t, ou, e) {
   
   trait <- e$traits[[lin_id]]
   stopifnot(trait$status == 1)
@@ -79,10 +80,12 @@ cs_evolve_good_lineage <- function(pars, lin_id, step.size, t) {
   
   probs <- calc_probs(mu, pars$lambda1)
   
-  if (cease_state(pars$lambda1, mu, step.size)) { #probability that lineage does not remain good
+  if (cease_state(pars$lambda1, mu, step_size)) { #probability that lineage does not remain good
     event <- sample(1:2, size = 1, prob = probs)
     if (event == 1) { #speciation initiated
-      #the current lineage is ended, and is saved as the ancestral node - in its stead are created two new lineages, the new parental lineage (same lineage, new number) and the new incipient lineage:
+      #the current lineage is ended, and is saved as the ancestral node - in its stead 
+      # are created two new lineages, the new parental lineage (same lineage, new 
+      # number) and the new incipient lineage:
       e$lineages[lin_id, "descendant_node"] <- lineage_next_parent(e$lineages)  # add descendant node number
       e$lineages[lin_id, "end_time"] <- t #update ending time
       e$lineages <- lineage_add(e$lineages, 
@@ -125,20 +128,19 @@ cs_evolve_good_lineage <- function(pars, lin_id, step.size, t) {
       }
     }
     if (event == 2) { #extinction
-      
-      e$lineages[lin_id, c("end_time", "status", "spec_or_ext_ct")] <- c(e$t, -2, e$t) #update lineage status to extinct in lineage matrix, update ending time and extinction time
+      # update lineage status to extinct in lineage matrix, update ending time and extinction time
+      e$lineages[lin_id, c("end_time", "status", "spec_or_ext_ct")] <- c(e$t, -2, e$t) 
       e$traits[[lin_id]]$status <- -2 #update lineage status to extinct in trait list
       
       daughter <- e$traits[[lin_id]]$relative_id #find daughter lineage of extinct lineage
       if (e$lineages[daughter, "status"] == -1) { #if daughter is incipient & alive, becomes good:
-        e$lineages[daughter, c("status", "spec_or_ext_ct", "spec_ct")] <- c(1, e$t, e$t) #update daughter lineage status to good in lineage matrix, update speciation completion times
+        # update daughter lineage status to good in lineage matrix, update speciation completion times
+        e$lineages[daughter, c("status", "spec_or_ext_ct", "spec_ct")] <- c(1, e$t, e$t) 
         e$traits[[daughter]]$status <- 1 #update daughter lineage status to good in trait list
       }
     }
-    
-    e$dead_lin <- lineages_dead(e$lineages) #update vector of non-active lineages in time step
-    e$born_lin <- lineages_born(e$lineages) #update vector of new lineages in time step: both the parent and incipient
   }
+  return(e)
 }
 
 
@@ -155,9 +157,12 @@ calc_lamda2 <- function(trait, tau0, beta) {
 
 calc_mui <- function(trait, trait_diff, alpha1,
                      mui0, alpha3, mui1, muibg) {
-  alpha1 * mui0 * sum(exp(-alpha1 * trait_diff ^ 2)) + #calculate rate of competitive-dependent extinction for species - depends on distance from lineages
-    alpha3 * mui1 * (1 - sum(exp(-alpha3 * calc_parental_abs_trait_diff(trait) ^ 2))) + #calculate rate of selective-dependent extinction for species - depends on distance from optima
-    muibg #add background extinction rate
+  # calculate rate of competitive-dependent extinction for species - depends on distance from lineages
+  alpha1 * mui0 * sum(exp(-alpha1 * trait_diff ^ 2)) +
+    # calculate rate of selective-dependent extinction for species - depends on distance from optima
+    alpha3 * mui1 * (1 - sum(exp(-alpha3 * calc_parental_abs_trait_diff(trait) ^ 2))) + 
+    # add background extinction rate
+    muibg 
 }
 
 # calculate rate of competitive-dependent extinction for species - depends on distance from lineages
@@ -185,8 +190,8 @@ calc_probs <- function(mu, lambda) {
 }
 
 # randomly determine a probability that lineage does not remain in same state
-cease_state <- function(lambda, mu, step.size) {
-  runif(1) <= (lambda + mu) * step.size
+cease_state <- function(lambda, mu, step_size) {
+  runif(1) <= (lambda + mu) * step_size
 }
 
 
@@ -212,15 +217,15 @@ boundary_effect <- function(x, bounds) {
 
 # add selection element where the trait value is pulled towards the optima based 
 # on how far away it is - the farther from the optimum it is, the stronger the pull
-add_ou_effect <- function(x1, x0, opt, alpha4, step.size) {
+add_ou_effect <- function(x1, x0, opt, alpha4, step_size) {
   for (j in seq_along(opt)){
-    x1 <- x1 + alpha4[j] * (opt[j] - x0) * step.size
+    x1 <- x1 + alpha4[j] * (opt[j] - x0) * step_size
   }
   x1
 }
 
 
-#' @export
+
 cs_current_trait_diff <- function(traits, active_lineages) {
   n_lineages = length(active_lineages)
   
@@ -245,7 +250,7 @@ cs_current_trait_diff <- function(traits, active_lineages) {
   trait_diff
 }
 
-#' @export
+
 cs_trait_diff_sgn <- function(trait_diff) {
   # extract signs from matrix: which trait in pair is lower and which is higher
   trait_diff_sgn <- sign(trait_diff) 
