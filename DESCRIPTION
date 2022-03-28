@@ -1,5 +1,5 @@
 Package: CAMPSITE
-Title: What the Package Does (One Line, Title Case)
+Title: Run simulation using the Competition And Multiple-Peak Selection Integrated Trait Evolution (CAMPSITE) model in R
 Version: 0.0.0.9000
 Authors@R: 
     c(person("Alex", "Slavenko", , "gluttony14@gmail.com", role = c("aut", "cre"),
