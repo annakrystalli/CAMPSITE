@@ -89,7 +89,7 @@ cs_simulate <- function (pars, ou = list(opt = NULL, alpha4 = NULL), root.value 
     
     # kill process if number of lineages has dropped to zero
     if (length(e$active_lineages) == 0) {
-      usethis::ui_info("Process dead. No active lineages left \n")
+      usethis::ui_info("\n Process dead. No active lineages left \n")
       process_dead <- TRUE
       (break)()
     }
@@ -101,7 +101,9 @@ cs_simulate <- function (pars, ou = list(opt = NULL, alpha4 = NULL), root.value 
   # retract step size to return back to current time
   t_end <- e$t - step_size 
   trees <- cs_build_trees(e$lineages, e$traits, t_end)
-
+  if (is.null(trees$gsp_extant$tree)) {
+    process_dead <- TRUE
+  }
   usethis::ui_done("Building tree complete \n")
   
   if (plot) {
@@ -129,4 +131,66 @@ cs_simulate <- function (pars, ou = list(opt = NULL, alpha4 = NULL), root.value 
                      full_results = FALSE, end_active_lineages = TRUE) 
     ) 
   }
+}
+
+
+
+
+#' Run replicates of simulation using the Competition And Multiple-Peak Selection 
+#' Integrated Trait Evolution (CAMPSITE) model
+#'
+#' @param out_filepath file path to save simulation replicate output
+#' @param max_rep maximum number of simulation replicates
+#' @inheritParams cs_simulate
+#'
+#' @return The function is intended to write results out to disk so results are returned invisibly. 
+#'  Output is a list with one element for each replicate. Each simulation result is an object of class `cs_sim_results`
+#' @export
+#' @importFrom foreach %dopar%
+cs_simulate_reps <- function(pars, ou = list(opt = NULL, alpha4 = NULL), root.value = 0, age.max = 50, 
+                        age.ext = NULL, step_size = 0.01, bounds = c(-Inf, Inf), 
+                        plot = TRUE, ylims = NULL, full_results = TRUE,
+                        out_filepath = NULL, max_rep = 100, ensure_valid = FALSE){
+
+  # cores <- parallel::detectCores()
+  # cl <- parallel::makeCluster(cores[1]-1) #not to overload your computer
+  # doParallel::registerDoParallel(cl)
+  
+  usethis::ui_info("Cluster registered. Initiating simulation replicates \n")
+  #pb <- progress::progress_bar$new(total = max_rep, show_after = 0,
+  #                                 clear = TRUE)
+   replicates <- list()
+   for (i in 1:max_rep) {
+    usethis::ui_info("COMPETITION: {usethis::ui_value(pars$alpha1)} -  SELECTION {usethis::ui_value(pars$alpha3)} --- replicate: {usethis::ui_value(i)} of {max_rep} \n")
+    repeat {
+      sim <- cs_simulate(pars, ou = ou, root.value = root.value, age.max = age.max, 
+                                        age.ext = age.ext, step_size = step_size, bounds = bounds, 
+                                        plot = plot, ylims = ylims, full_results = full_results) 
+    
+      #pb$tick()
+      if (ensure_valid) {
+        if (!sim$process_dead && sim$trees$gsp_extant$tree$Nnode > 4) {
+          usethis::ui_done("Valid replicate {usethis::ui_value(i)} obtained \n\n\n")
+          break
+        }
+      } else {
+        usethis::ui_done("Replicate {usethis::ui_value(i)} obtained \n\n\n")
+        break
+      }
+    }
+     replicates[[i]] <- sim
+  }
+  # parallel::stopCluster(cl)
+  
+  usethis::ui_done("Replicate simulation complete \n")
+  if(!is.null(out_filepath)){
+    if(! out_filepath %>% dirname %>% dir.exists) {
+      out_filepath %>% dirname %>% dir.create
+      usethis::ui_info("Directory {usethis::ui_path(dirname(out_filepath))} created \n")
+    }
+    saveRDS(replicates, out_filepath)
+    usethis::ui_done("Results written out to {usethis::ui_path(out_filepath)} \n\n\n")
+  }
+  usethis::ui_value("-------------------------------------------------------------\n\n\n")
+  invisible(replicates)
 }

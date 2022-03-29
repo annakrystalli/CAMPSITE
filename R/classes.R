@@ -319,7 +319,7 @@ traits_find_daughters <- function(traits, lin_id, format = c("int", "lin_id")) {
 
 
 new_sim_result <- function(trees, t_end, step_size, pars, process_dead = FALSE, lineages = NULL, 
-                           traits = NULL, full_results = FALSE, end_active_lineages = TRUE) {
+                           traits = NULL, full_results = TRUE, end_active_lineages = TRUE) {
   
   checkmate::assert_number(t_end)
   checkmate::assert_class(trees, "cs_sim_trees")
@@ -333,7 +333,6 @@ new_sim_result <- function(trees, t_end, step_size, pars, process_dead = FALSE, 
   if(!is.null(traits)){
     checkmate::assert_true(length(traits) == nrow(lineages))
   }
-  stopifnot(full_results & !is.null(lineages) & !is.null(traits))
   
   if(end_active_lineages & full_results){
     lineages[lineages[, "end_time"] < 0, "end_time"] <- t_end

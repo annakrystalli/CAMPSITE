@@ -45,7 +45,7 @@ cs_build_trees <- function(lineages, traits, t) {
   
   # if all tips are 'extinct' (extinct or incipient)
   if (length(extinct_todrop) == n_tips) { 
-    usethis::ui_info("Process dead. All tips extinct. No extant tree available \n")
+    usethis::ui_info("Process dead. All tips extinct or incipient at end of process. No extant tree available \n")
     tree_gsp_extant <- NULL
     tip_values_gsp_extant <- NULL
     process_dead <- TRUE
