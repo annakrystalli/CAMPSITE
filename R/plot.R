@@ -230,15 +230,16 @@ plot_var_vs_time <- function(x, variable = c("VAR", "MNND", "VNND"),
       },
     int = {
       plot_df$time <- plot_df$time_int
-      plot_df <- plot_df %>%
-        dplyr::group_by(.data$selection, .data$time, 
-                        .data$competition) %>%
-        dplyr::summarise(value = mean(.data$value))}
+      }
   )
   
 
 
   plot_df %>%
+    dplyr::group_by(.data$selection, 
+                    .data$competition,
+                    .data$time) %>%
+    dplyr::summarise(value = mean(.data$value, na.rm = TRUE)) %>%
     ggplot(aes(x = time, y = value, colour = competition, 
                fill = competition)) +
     geom_line(size = 1) +
@@ -253,6 +254,12 @@ plot_var_vs_time <- function(x, variable = c("VAR", "MNND", "VNND"),
 }
 
 
+#' Plot result diversification rates against time.
+#'
+#' @param x an object or list of objects of class `cs_result_summaries`.
+#' @return plot of diversification against time
+#' @export
+#' @import ggplot2
 plot_diversification <- function(x) {
   
   checkmate::assert_class(x, "list")
