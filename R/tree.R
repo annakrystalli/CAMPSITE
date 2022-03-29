@@ -1,5 +1,4 @@
 # BUILD TREES & GET TIPS TRAIT VECTORS
-#' @export
 cs_build_trees <- function(lineages, traits, t) {
   # sort active lineages in increasing order, after including extinct lineages
   edge_lineages <- lineages_edges(lineages)
@@ -66,7 +65,7 @@ cs_build_trees <- function(lineages, traits, t) {
                           tree_gsp_extant, tip_values_gsp_extant))
 }
 
-#' @export
+
 cs_edge_matrix <- function(lineages) {
 
   is_tip <- function(x) {

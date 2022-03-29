@@ -48,7 +48,7 @@ cs_summarise_result <- function(x,  max_trait_len = NULL) {
   
   summaries <- list(
     lineages = x$lineages,
-    VAR = apply(traits_mat, 2, var, na.rm = TRUE),
+    VAR = apply(traits_mat, 2, stats::var, na.rm = TRUE),
     MNND = apply(traits_mat, 2, MNND),
     VNND = apply(traits_mat, 2, VNND),
     tip_traits = x$trees$gsp_extant$tips,
@@ -70,7 +70,7 @@ cs_summarise_result <- function(x,  max_trait_len = NULL) {
 MNND <- function(x){
   a <- x[!is.na(x)]
   if(length(a) > 1){
-    a <- as.matrix(dist(a))
+    a <- as.matrix(stats::dist(a))
     diag(a) <- NA
     return(mean(apply(a, 2, min, na.rm = TRUE)))
   }
@@ -80,9 +80,9 @@ MNND <- function(x){
 VNND <- function(x){
   a <- x[!is.na(x)]
   if(length(a) > 1){
-    a <- as.matrix(dist(a))
+    a <- as.matrix(stats::dist(a))
     diag(a) <- NA
-    return(var(apply(a, 2, min, na.rm = TRUE)))
+    return(stats::var(apply(a, 2, min, na.rm = TRUE)))
   }
   else(return(0))
 }
@@ -116,27 +116,27 @@ extractSignal <- function(model, method = c("K", "lambda")){
   tips <- model$tip_traits
   tips <- tips[tree$tip.label]
   if (method == "K")
-  {K <- phylosig(tree, tips, "K") 
+  {K <- phytools::phylosig(tree, tips, "K") 
   return(as.numeric(K))} else
     if (method == "lambda")
-    {lambda <- phylosig(tree, tips, "lambda")
+    {lambda <- phytools::phylosig(tree, tips, "lambda")
     return(lambda$lambda)}
 }
 
 fitTraitModels <- function(model){
   models <- numeric()
   tree <- model$tree_extant
-  tree$edge.length <- sapply(tree$edge.length, function(x) x + rnorm(1, sd = 0.001))
+  tree$edge.length <- sapply(tree$edge.length, function(x) x + stats::rnorm(1, sd = 0.001))
   tips <- as.matrix(model$tip_traits)
-  models[[1]] <- transformPhylo.ML(tips, tree, model = "BM")$AICc
-  models[[2]] <- transformPhylo.ML(tips, tree, model = "OU")$AICc
-  models[[3]] <- transformPhylo.ML(tips, tree, model = "ACDC")$AICc
+  models[[1]] <- motmot::transformPhylo.ML(tips, tree, model = "BM")$AICc
+  models[[2]] <- motmot::transformPhylo.ML(tips, tree, model = "OU")$AICc
+  models[[3]] <- motmot::transformPhylo.ML(tips, tree, model = "ACDC")$AICc
   models[[4]] <- fit_t_comp(tree, tips[,1], model = "MC")$aicc
   models[[5]] <- fit_t_comp(tree, tips[,1], model = "DDlin")$aicc
   models[[6]] <- fit_t_comp(tree, tips[,1], model = "DDexp")$aicc
   names(models) <- c("BM", "OU", "ACDC", "MC", "DDlin", "DDexp")
   if (names(sort(models))[[1]] == "ACDC"){
-    if (transformPhylo.ML(tips, tree, model = "ACDC")$ACDC[,3] < 0) {names(models)[[3]] <- "ACDCdec"} 
+    if (motmot::transformPhylo.ML(tips, tree, model = "ACDC")$ACDC[,3] < 0) {names(models)[[3]] <- "ACDCdec"} 
     else {names(models)[[3]] <- "ACDCinc"}
   }
   return(names(sort(models))[[1]])
@@ -149,18 +149,18 @@ fitDivModels <- function(model){
   f.cst <- function(t,y){y[1]}
   f.lin <- function(t,y){abs(y[1] + y[2] * t)}
   f.exp <- function(t,y){y[1] * exp(y[2] * t)}
-  models[[1]] <- fit_bd(phylo = tree, tot_time = 50, f.lamb = f.cst, f.mu = f.null, lamb_par = c(0.09), mu_par = c(), f = 1, cst.lamb = T, fix.mu = T, cond = "stem")$aicc
-  models[[2]] <- fit_bd(phylo = tree, tot_time = 50, f.lamb = f.lin, f.mu = f.null, lamb_par = c(0.09, 0.001), mu_par = c(), f = 1, fix.mu = T, cond = "stem")$aicc
-  models[[3]] <- fit_bd(phylo = tree, tot_time = 50, f.lamb = f.exp, f.mu = f.null, lamb_par = c(0.05, 0.01), mu_par = c(), f = 1, expo.lamb = T, fix.mu = T, cond = "stem")$aicc
-  models[[4]] <- fit_bd(phylo = tree, tot_time = 50, f.lamb = f.cst, f.mu = f.cst, lamb_par = c(0.09), mu_par = c(0.005), f = 1, cst.lamb = T, cst.mu = T, cond = "stem")$aicc
-  models[[5]] <- fit_bd(phylo = tree, tot_time = 50, f.lamb = f.lin, f.mu = f.cst, lamb_par = c(0.09, 0.001), mu_par = c(0.005), f = 1, cst.mu = T, cond = "stem")$aicc
-  models[[6]] <- fit_bd(phylo = tree, tot_time = 50, f.lamb = f.exp, f.mu = f.cst, lamb_par = c(0.05, 0.01), mu_par = c(0.005), f = 1, expo.lamb = T, cst.mu = T, cond = "stem")$aicc
-  models[[7]] <- fit_bd(phylo = tree, tot_time = 50, f.lamb = f.cst, f.mu = f.lin, lamb_par = c(0.09), mu_par = c(0.005, 0.0001), f = 1, cst.lamb = T, cond = "stem")$aicc
-  models[[8]] <- fit_bd(phylo = tree, tot_time = 50, f.lamb = f.lin, f.mu = f.lin, lamb_par = c(0.09, 0.001), mu_par = c(0.005, 0.0001), f = 1, cond = "stem")$aicc
-  models[[9]] <- fit_bd(phylo = tree, tot_time = 50, f.lamb = f.exp, f.mu = f.lin, lamb_par = c(0.05, 0.01), mu_par = c(0.005, 0.0001), f = 1, expo.lamb = T, cond = "stem")$aicc
-  models[[10]] <- fit_bd(phylo = tree, tot_time = 50, f.lamb = f.cst, f.mu = f.exp, lamb_par = c(0.09), mu_par = c(0.0035, 0.001), f = 1, cst.lamb = T, expo.mu = T, cond = "stem")$aicc
-  models[[11]] <- fit_bd(phylo = tree, tot_time = 50, f.lamb = f.lin, f.mu = f.exp, lamb_par = c(0.09, 0.001), mu_par = c(0.0035, 0.001), f = 1, expo.mu = T, cond = "stem")$aicc
-  models[[12]] <- fit_bd(phylo = tree, tot_time = 50, f.lamb = f.exp, f.mu = f.exp, lamb_par = c(0.05, 0.01), mu_par = c(0.0035, 0.001), f = 1, expo.lamb = T, expo.mu = T, cond = "stem")$aicc
+  models[[1]] <- RPANDA::fit_bd(phylo = tree, tot_time = 50, f.lamb = f.cst, f.mu = f.null, lamb_par = c(0.09), mu_par = c(), f = 1, cst.lamb = T, fix.mu = T, cond = "stem")$aicc
+  models[[2]] <- RPANDA::fit_bd(phylo = tree, tot_time = 50, f.lamb = f.lin, f.mu = f.null, lamb_par = c(0.09, 0.001), mu_par = c(), f = 1, fix.mu = T, cond = "stem")$aicc
+  models[[3]] <- RPANDA::fit_bd(phylo = tree, tot_time = 50, f.lamb = f.exp, f.mu = f.null, lamb_par = c(0.05, 0.01), mu_par = c(), f = 1, expo.lamb = T, fix.mu = T, cond = "stem")$aicc
+  models[[4]] <- RPANDA::fit_bd(phylo = tree, tot_time = 50, f.lamb = f.cst, f.mu = f.cst, lamb_par = c(0.09), mu_par = c(0.005), f = 1, cst.lamb = T, cst.mu = T, cond = "stem")$aicc
+  models[[5]] <- RPANDA::fit_bd(phylo = tree, tot_time = 50, f.lamb = f.lin, f.mu = f.cst, lamb_par = c(0.09, 0.001), mu_par = c(0.005), f = 1, cst.mu = T, cond = "stem")$aicc
+  models[[6]] <- RPANDA::fit_bd(phylo = tree, tot_time = 50, f.lamb = f.exp, f.mu = f.cst, lamb_par = c(0.05, 0.01), mu_par = c(0.005), f = 1, expo.lamb = T, cst.mu = T, cond = "stem")$aicc
+  models[[7]] <- RPANDA::fit_bd(phylo = tree, tot_time = 50, f.lamb = f.cst, f.mu = f.lin, lamb_par = c(0.09), mu_par = c(0.005, 0.0001), f = 1, cst.lamb = T, cond = "stem")$aicc
+  models[[8]] <- RPANDA::fit_bd(phylo = tree, tot_time = 50, f.lamb = f.lin, f.mu = f.lin, lamb_par = c(0.09, 0.001), mu_par = c(0.005, 0.0001), f = 1, cond = "stem")$aicc
+  models[[9]] <- RPANDA::fit_bd(phylo = tree, tot_time = 50, f.lamb = f.exp, f.mu = f.lin, lamb_par = c(0.05, 0.01), mu_par = c(0.005, 0.0001), f = 1, expo.lamb = T, cond = "stem")$aicc
+  models[[10]] <- RPANDA::fit_bd(phylo = tree, tot_time = 50, f.lamb = f.cst, f.mu = f.exp, lamb_par = c(0.09), mu_par = c(0.0035, 0.001), f = 1, cst.lamb = T, expo.mu = T, cond = "stem")$aicc
+  models[[11]] <- RPANDA::fit_bd(phylo = tree, tot_time = 50, f.lamb = f.lin, f.mu = f.exp, lamb_par = c(0.09, 0.001), mu_par = c(0.0035, 0.001), f = 1, expo.mu = T, cond = "stem")$aicc
+  models[[12]] <- RPANDA::fit_bd(phylo = tree, tot_time = 50, f.lamb = f.exp, f.mu = f.exp, lamb_par = c(0.05, 0.01), mu_par = c(0.0035, 0.001), f = 1, expo.lamb = T, expo.mu = T, cond = "stem")$aicc
   names(models) <- c("Bcst", "Blin", "Bexp", "BcstDcst", "BlinDcst", "BexpDcst", "BcstDlin", "BlinDlin", "BexpDlin", "BcstDexp", "BlinDexp", "BexpDexp")
   return(names(sort(models))[[1]])
 }

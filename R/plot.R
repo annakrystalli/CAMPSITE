@@ -69,7 +69,7 @@ cs_plot_trait_evolution <- function(traits, lineages, t, step_size, ylims = NULL
     trait_values <- extract_trait_values(traits[[i]])
     
     if (is.na(completion[i])) { #extinct incipient lineages
-      lines(x = seq_along(trait_values), # branch length
+      graphics::lines(x = seq_along(trait_values), # branch length
             y = trait_values, #trait values
             col = coli, #incipient lineages in red
             cex = 0.5)
@@ -79,34 +79,34 @@ cs_plot_trait_evolution <- function(traits, lineages, t, step_size, ylims = NULL
              completion[i] != lineages[i, "spec_ct"]) { # extinct good lineages
       spec_t_s <- lineages[i, "spec_ct"] / step_size + 1
       
-      lines(x = seq(1, spec_t_s), # branch length of incipient stage
+      graphics::lines(x = seq(1, spec_t_s), # branch length of incipient stage
             y = trait_values[seq(1, spec_t_s)],
             col = coli, # incipient stage in red
             cex = 0.5)
-      lines(x = seq(spec_t_s, length(trait_values)), #branch length of good stage
+      graphics::lines(x = seq(spec_t_s, length(trait_values)), #branch length of good stage
             y =  trait_values[seq(spec_t_s, length(trait_values))],
             col = colg, # good stage in black
             cex = 0.5)
     }
     else { #  extant good and incipient lineages
       comp_t_s <- completion[i] / step_size + 1
-      lines(x = seq(1, comp_t_s), #branch length of incipient stage
+      graphics::lines(x = seq(1, comp_t_s), #branch length of incipient stage
             y = trait_values[seq(1, comp_t_s)], #trait values of incipient stage
             col = coli, #incipient stage in red
             cex = 0.5)
       if (length(trait_values) > round(comp_t_s)) { #if completed speciation before end of process
-        lines(x = seq(comp_t_s, length(trait_values)), #branch length of good stage
+        graphics::lines(x = seq(comp_t_s, length(trait_values)), #branch length of good stage
               y = trait_values[seq(comp_t_s, length(trait_values))], #trait values of good stage
               col = colg, #good stage in black
               cex = 0.5)
       }
     }
-    legend("bottomleft", legend = c("good", "incipient"), col = c(colg, coli), 
+    graphics::legend("bottomleft", legend = c("good", "incipient"), col = c(colg, coli), 
            bty = "n", lwd = 2)
   }
 }
 
-#' @export
+
 plot_tip_traits_df <- function(x){
   
   checkmate::assert_class(x, "list")
@@ -176,7 +176,7 @@ plot_trait_tip_means  <- function(x) {
   
     group_by(competition, selection, iteration) %>%
     summarise(mean = mean(var, na.rm = T),
-              sd = sd(var, na.rm = T),
+              sd = stats::sd(var, na.rm = T),
               kurt = e1071::kurtosis(var, na.rm = T)) %>%
     ggplot(aes(y = mean, x = competition, fill = as.factor(competition))) +
     geom_boxplot() +

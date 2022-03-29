@@ -141,6 +141,7 @@ cs_simulate <- function (pars, ou = list(opt = NULL, alpha4 = NULL), root.value 
 #'
 #' @param out_filepath file path to save simulation replicate output
 #' @param max_rep maximum number of simulation replicates
+#' @param ensure_valid whether to to repeat simulate until valid (process not dead and nNode > 4) replicate obtained
 #' @inheritParams cs_simulate
 #'
 #' @return The function is intended to write results out to disk so results are returned invisibly. 

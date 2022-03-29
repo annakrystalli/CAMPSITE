@@ -50,3 +50,4 @@ test_that("lineage class methods work", {
   expect_equal(lineages_edges(lin_methods), c("lin2", "lin3", "lin4"))
     
 })
+

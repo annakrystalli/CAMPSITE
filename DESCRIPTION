@@ -25,7 +25,10 @@ Imports:
     dplyr,
     tibble,
     adephylo,
-    paleotree
+    paleotree,
+    e1071,
+    progress,
+    scales
 Suggests: 
     cowplot,
     geiger,

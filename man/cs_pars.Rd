@@ -49,12 +49,6 @@ cs_pars(
 \item{sig2}{variance (rate) of Brownian motion (BM)}
 
 \item{m}{relative contribution of character displacement (competition) with respect to stochastic (brownian) evolution}
-
-\item{s}{variance of BM per step size}
-
-\item{step_size}{size of step of BM}
-
-\item{age.max}{maximum age}
 }
 \value{
 object of class \code{pars} of parameter values

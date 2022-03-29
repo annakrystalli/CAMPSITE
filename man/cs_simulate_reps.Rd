@@ -45,6 +45,8 @@ cs_simulate_reps(
 \item{out_filepath}{file path to save simulation replicate output}
 
 \item{max_rep}{maximum number of simulation replicates}
+
+\item{ensure_valid}{whether to to repeat simulate until valid (process not dead and nNode > 4) replicate obtained}
 }
 \value{
 The function is intended to write results out to disk so results are returned invisibly.

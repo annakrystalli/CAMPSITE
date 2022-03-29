@@ -24,6 +24,3 @@ An object of class "lineage" with the following values
 \description{
 Create a lineage object
 }
-\examples{
-new_lineage(c(1, 0, 0, -1, 1, 0, 0))
-}

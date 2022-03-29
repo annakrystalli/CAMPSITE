@@ -21,17 +21,14 @@ new_trait(
 lineage, \code{relative_id} indicates the parent lineage. if trait is associated with
 good lineage, \code{relative_id} indicates the daughter lineage.}
 
+\item{parent_trait_value}{the trait value of the parent lineage.}
+
 \item{trait_values}{current trait value of parental lineage, and all consecutive
 elements contain trait value at each time step (always \code{root.value} at the beginning)}
-
-\item{x}{a vector of four or more values.}
 }
 \value{
-An object of class "trait" with the following values
+an obeject of class \code{cs_trait}.
 }
 \description{
-Create a trait object
-}
-\examples{
-new_trait(1, 1, 2, c(NA, root.value))
+An object of class "trait" with the following values
 }

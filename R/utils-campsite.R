@@ -12,7 +12,7 @@ cs_sim_next_trait_value  <- function(traits, active_lineages, trait_diff, ou,
     diff_t <- trait_diff[lin_i, -lin_i]
     
     trait_values <- traits[[lin_id]]$trait_values
-    current_trait_value <- tail(trait_values, 1)
+    current_trait_value <- utils::tail(trait_values, 1)
     
     next_trait_value <- evolve_trait(x = current_trait_value, alpha2 = pars$alpha2, 
                                      m = pars$m, s = pars$s, opt = ou$opt, sign_t, diff_t, bounds)
@@ -175,7 +175,7 @@ calc_mu <- function(trait_diff, alpha1, alpha3, mu0, mu1, mubg, trait_diff_opt) 
     mubg 
  
  if (mu0 != 0 & mu == 0) { #captures the case when there's only one lineage alive & extinction is activated
-   mu <- 0.02 * pars$mu0 #when alone, a lineage has basal extinction rate (equal to having infinite distance with neighbors & no selection)
+   mu <- 0.02 * mu0 #when alone, a lineage has basal extinction rate (equal to having infinite distance with neighbors & no selection)
  }
  
  mu
@@ -192,7 +192,7 @@ calc_probs <- function(mu, lambda) {
 
 # randomly determine a probability that lineage does not remain in same state
 cease_state <- function(lambda, mu, step_size) {
-  runif(1) <= (lambda + mu) * step_size
+  stats::runif(1) <= (lambda + mu) * step_size
 }
 
 
@@ -206,7 +206,7 @@ evolve_trait <- function(x, alpha2, m, s, opt, sign_t, diff_t, bounds) {
   x + alpha2 * m * sum(sign_t * exp(-alpha2 * (diff_t)^2)) + #add competitive element where the trait value 
     # is pushed away from trait values of other lineages based on the differences - the closer two traits are, 
     # the stronger competition will drive them away
-    rnorm(1, 0, s) + # add Brownian Motion element
+    stats::rnorm(1, 0, s) + # add Brownian Motion element
     boundary_effect(x, bounds)
 }
 
@@ -241,8 +241,8 @@ cs_current_trait_diff <- function(traits, active_lineages) {
       lin_i <- active_lineages[i]
       lin_j <- active_lineages[j]
       
-      trait_diff[i, j] <- tail(traits[[lin_i]]$trait_values, 1) - 
-        tail(traits[[lin_j]]$trait_values, 1) 
+      trait_diff[i, j] <- utils::tail(traits[[lin_i]]$trait_values, 1) - 
+        utils::tail(traits[[lin_j]]$trait_values, 1) 
     } 
   }
   
@@ -262,7 +262,7 @@ cs_trait_diff_sgn <- function(trait_diff) {
   if (any(trait_diff_sgn == 0, na.rm = T)) { 
     trait_diff_sgn[lower.tri(trait_diff_sgn)] <- NA # turn lower triangle into NA to remove duplicates for rest of loop
     eq_ind <-  trait_diff_sgn == 0 & !is.na(trait_diff_sgn) # identify which lineages make up identical lineage pairs
-    trait_diff_sgn[eq_ind] <- sign(rnorm(sum(eq_ind, na.rm = TRUE))) #assign random sign to lineage pair
+    trait_diff_sgn[eq_ind] <- sign(stats::rnorm(sum(eq_ind, na.rm = TRUE))) #assign random sign to lineage pair
     
     trait_diff_sgn[lower.tri(trait_diff_sgn)] <- -trait_diff_sgn[upper.tri(trait_diff_sgn)] #reassign lower triangle
   } 

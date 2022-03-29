@@ -14,9 +14,6 @@
 #' @param alpha3 selection effect on extinction (selection strength)
 #' @param sig2 variance (rate) of Brownian motion (BM)
 #' @param m relative contribution of character displacement (competition) with respect to stochastic (brownian) evolution
-#' @param s variance of BM per step size
-#' @param step_size size of step of BM
-#' @param age.max maximum age
 #'
 #' @return object of class `pars` of parameter values
 #' @export
