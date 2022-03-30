@@ -14,7 +14,8 @@ cs_simulate(
   bounds = c(-Inf, Inf),
   plot = TRUE,
   ylims = NULL,
-  full_results = FALSE
+  full_results = FALSE,
+  show_shiny_i = FALSE
 )
 }
 \arguments{
@@ -36,7 +37,9 @@ cs_simulate(
 
 \item{ylims}{ylim}
 
-\item{full_results}{logical. Whether to return full results, including lineage and}
+\item{full_results}{logical. Whether to return full results, including lineage and traits.}
+
+\item{show_shiny_i}{logical. Whether to export simulation iteration number to global environment (useful for progress tracking in shiny app).}
 }
 \value{
 an object of class \code{cs_sim_results} containing the following:

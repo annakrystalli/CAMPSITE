@@ -10,7 +10,8 @@
 #' @param bounds numeric vector of length 2. Trait value bounds
 #' @param plot logical. Whether to plot resulting tree
 #' @param ylims ylim
-#' @param full_results logical. Whether to return full results, including lineage and
+#' @param full_results logical. Whether to return full results, including lineage and traits.
+#' @param show_shiny_i logical. Whether to include a shiny simulation iteration counter (useful for progress tracking in shiny app). 
 #'
 #' @return an object of class `cs_sim_results` containing the following:
 #' - `trees` trees resulting from the simulated lineage evolution. Each tree element contains the tree, an object of class `phylo` (`tree`),
@@ -34,7 +35,7 @@
 #' 
 cs_simulate <- function (pars, ou = list(opt = NULL, alpha4 = NULL), root.value = 0, age.max = 50, 
                           age.ext = NULL, step_size = 0.01, bounds = c(-Inf, Inf), 
-                          plot = TRUE, ylims = NULL, full_results = FALSE) 
+                          plot = TRUE, ylims = NULL, full_results = FALSE, show_shiny_i = FALSE) 
 {
   
   validate_bounds(bounds, root.value)
@@ -60,9 +61,13 @@ cs_simulate <- function (pars, ou = list(opt = NULL, alpha4 = NULL), root.value 
   usethis::ui_info("Simulation initiated \n")
   pb <- progress::progress_bar$new(total = ceiling(age.max / step_size), show_after = 0,
                                    clear = FALSE)
-  #pb$tick(0)
+
   #t must go one step beyond age.max to ensure simulation of last step. /2 is to avoid numerical precision issues
   while ((age.max - e$t) > -step_size / 2) { 
+    
+    if (show_shiny_i) {
+      shiny::incProgress(e$t/age.max, detail = paste("Time:", e$t, "of maximum age:", age.max))
+    }
     
     # list of differences - each element will store the differences 
     # in trait value between each lineage and all other co-occurring lineages

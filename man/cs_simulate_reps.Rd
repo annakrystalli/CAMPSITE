@@ -40,7 +40,7 @@ cs_simulate_reps(
 
 \item{ylims}{ylim}
 
-\item{full_results}{logical. Whether to return full results, including lineage and}
+\item{full_results}{logical. Whether to return full results, including lineage and traits.}
 
 \item{out_filepath}{file path to save simulation replicate output}
 
