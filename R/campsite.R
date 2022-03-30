@@ -66,7 +66,7 @@ cs_simulate <- function (pars, ou = list(opt = NULL, alpha4 = NULL), root.value 
   while ((age.max - e$t) > -step_size / 2) { 
     
     if (show_shiny_i) {
-      shiny::incProgress(e$t/age.max, detail = paste("Time:", e$t, "of maximum age:", age.max))
+      shiny::incProgress(step_size/age.max, detail = paste("Time:", round(e$t, 4), "of maximum age:", age.max))
     }
     
     # list of differences - each element will store the differences 

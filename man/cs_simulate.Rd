@@ -39,7 +39,7 @@ cs_simulate(
 
 \item{full_results}{logical. Whether to return full results, including lineage and traits.}
 
-\item{show_shiny_i}{logical. Whether to export simulation iteration number to global environment (useful for progress tracking in shiny app).}
+\item{show_shiny_i}{logical. Whether to include a shiny simulation iteration counter (useful for progress tracking in shiny app).}
 }
 \value{
 an object of class \code{cs_sim_results} containing the following:
