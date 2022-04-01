@@ -184,6 +184,7 @@ cs_simulate_reps <- function(pars, ou = list(opt = NULL, alpha4 = NULL), root.va
         break
       }
     }
+     sim$replicate <- i
      replicates[[i]] <- sim
   }
   # parallel::stopCluster(cl)
