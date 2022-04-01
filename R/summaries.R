@@ -58,7 +58,8 @@ cs_summarise_result <- function(x,  max_trait_len = NULL) {
     competition = x$pars$alpha1,
     selection = x$pars$alpha3,
     t_end = x$t_end,
-    step_size = x$step_size
+    step_size = x$step_size,
+    replicate = x$replicate
     
   )
   ## Set the name for the class
