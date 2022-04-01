@@ -334,7 +334,7 @@ new_sim_result <- function(trees, t_end, step_size, pars, process_dead = FALSE, 
   
   x <- list(trees = trees, pars = pars, process_dead = process_dead, t_end = t_end, 
             step_size = step_size, lineages = lineages, traits = traits, 
-            full_results = full_results)
+            full_results = full_results, replicate = replicate)
   
   class(x) <- append(class(x),"cs_sim_results")
   
