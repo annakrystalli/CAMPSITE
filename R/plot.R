@@ -328,6 +328,78 @@ plot_diversification <- function(x) {
   
 }
 
+
+
+#' Plot result summary variable replicates for a single competition x selection combination against time.
+#'
+#' @param x an object or list of objects of class `cs_result_summaries`. Must have replicate details recorded.
+#' @param variable character string. The variable to be plotted through time.
+#' @param ylab character string. Label for y axis. Defaults to variable.
+#' @param time character string. If `step`, values are plotted against each time step.
+#' If `int` the  values at each integer time point are plotted
+#'
+#' @return plot of variable mean and replicates for a single competition x selection combination against time. The last replicate is highlighted.
+#' @export
+#' @import ggplot2
+plot_var_vs_time_replicates <- function(x, variable = c("VAR", "MNND", "VNND"), 
+                             ylab = NULL, time = c("step", "int")) {
+  
+  variable <- match.arg(variable)
+  time <- match.arg(time)
+  
+  if (is.null(ylab)) {
+    ylab <- variable
+  }
+  
+  checkmate::assert_class(x, "list")
+  
+  if(inherits(x, "cs_result_summaries")){
+    x <- list(x)
+  }
+  
+  plot_df <- lapply(x, prep_time_plot_df, 
+                    variable = variable) %>%
+    do.call(rbind, .) 
+  
+  if (! "replicate" %in% names(plot_df)) {
+    usethis::ui_stop("No recorded replicate information to plot")
+  }
+  if (length(unique(paste0(plot_df$competition, plot_df$selection))) > 1) {
+    usethis::ui_stop("More than one competition x selection combination detected in data. This plot is designed for replicates of a single competition x selection combination")
+  }
+  
+  switch (time,
+          step = {
+            plot_df$time <- plot_df$time_step
+          },
+          int = {
+            plot_df$time <- plot_df$time_int
+          }
+  )
+  
+  mean_df <- plot_df %>%
+    dplyr::group_by(.data$selection, 
+                    .data$competition,
+                    .data$time) %>%
+    dplyr::summarise(value = mean(.data$value, na.rm = TRUE)) 
+  
+  rep_n <- sort(unique(plot_df$replicate))
+  palette <- c(rep("grey", length(rep_n) - 1), 
+               harrypotter::hp(n = 6, option = "Ravenclaw")[2])
+  
+  plot_df %>%
+    ggplot(aes(x = time, y = value, colour = as.factor(replicate))) +
+    geom_line(size = 0.5) +
+    scale_color_manual(values =  palette, 
+                       name = "Replicates") +
+    labs(x = "Time", y = ylab) + 
+    geom_line(data = mean_df, aes(x = time, y = value), 
+              colour = "black", inherit.aes = FALSE)
+  
+}
+
+
+
 # ---- PLOT Data - preprocess ---- ############################################
 
 prep_time_plot_df <- function(x, variable = "VAR") {
@@ -335,7 +407,8 @@ prep_time_plot_df <- function(x, variable = "VAR") {
   df <- tibble::tibble(value = x[[variable]],
                    variable = variable,
                    competition = as.factor(x$competition),
-                   selection = as.factor(x$selection))
+                   selection = as.factor(x$selection),
+                   replicate = x$replicate)
   
   df$time_step <- seq_along(df$variable) * x$step_size
   df$time_int <- as.integer(df$time_step)
@@ -345,9 +418,10 @@ prep_time_plot_df <- function(x, variable = "VAR") {
 
 prep_lineages_div <- function(x) {
   
-  df <- as.data.frame(x$lineages)
+  df <- tibble::as_tibble(as.data.frame(x$lineages))
   df$competition <- x$competition
   df$selection <- x$selection
+  df$replicate <- x$replicate
   
   return(df)
   
@@ -358,7 +432,9 @@ prep_trees_div <- function(x) {
   df <- sumBL(x)
   df$competition <- x$competition
   df$selection <- x$selection
+  df$replicate <- x$replicate
   
   return(df)
   
 }
+
