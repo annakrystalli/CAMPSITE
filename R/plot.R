@@ -106,37 +106,6 @@ cs_plot_trait_evolution <- function(traits, lineages, t, step_size, ylims = NULL
   }
 }
 
-
-plot_tip_traits_df <- function(x){
-  
-  checkmate::assert_class(x, "list")
-  
-  if(inherits(x, "cs_result_summaries")){
-    df <- data.frame(tip_values = x$tip_traits, 
-                     competition = x$competition,
-                     selection = x$selection)
-    
-    return(df)
-  }
-  
-  res_class <- sapply(x, FUN = function(i){inherits(i, "cs_result_summaries")})
-  res_class_n <- sum(res_class)
-  
-  if(sum(!res_class) == length(x)){
-    usethis::ui_stop("No objects of class cs_result_summaries in {usethis::ui_field('x')}")
-  }
-  
-  if(res_class_n != length(x)){
-    usethis::ui_warn("{res_class_n} of {length(x)} elements of {usethis::ui_field('x')} not objects of class cs_result_summaries. Ignored")
-  }
-  
-  l_df <- lapply(x[res_class], function(i){
-    data.frame(tip_values = i$tip_traits, competition = i$competition,
-               selection = i$selection)
-  })
-  return(do.call(rbind, l_df))
-}
-
 #' Plot tip trait distribution on competition x selection grid
 #'
 #' @param x an object of class `cs_result_summaries` or list of `cs_result_summaries` objects
@@ -189,7 +158,6 @@ plot_trait_tip_means  <- function(x) {
           axis.text.x = element_text(angle = 45, vjust = 0.5)) +
     facet_grid(cols = vars(selection),
                labeller = label_both)
-  
   
 }
 
@@ -328,8 +296,6 @@ plot_diversification <- function(x) {
   
 }
 
-
-
 #' Plot result summary variable replicates for a single competition x selection combination against time.
 #'
 #' @param x an object or list of objects of class `cs_result_summaries`. Must have replicate details recorded.
@@ -381,26 +347,104 @@ plot_var_vs_time_replicates <- function(x, variable = c("VAR", "MNND", "VNND"),
     dplyr::group_by(.data$selection, 
                     .data$competition,
                     .data$time) %>%
-    dplyr::summarise(value = mean(.data$value, na.rm = TRUE)) 
+    dplyr::summarise(value = mean(.data$value, na.rm = TRUE)) %>%
+    tibble::add_column(replicate = as.factor("mean"))
+  
+  plot_df <- dplyr::mutate(plot_df, replicate = as.factor(.data$replicate)) %>%
+    dplyr::bind_rows(mean_df) 
+  
   
   rep_n <- sort(unique(plot_df$replicate))
-  palette <- c(rep("grey", length(rep_n) - 1), 
-               harrypotter::hp(n = 6, option = "Ravenclaw")[2])
+  palette <- c(rep("grey", length(rep_n) - 2), 
+               harrypotter::hp(n = 6, option = "Ravenclaw")[2],
+               "black")
+  lwd <- c(rep(0.4, length(rep_n) - 2), 0.7, 1.1)
   
   plot_df %>%
-    ggplot(aes(x = time, y = value, colour = as.factor(replicate))) +
-    geom_line(size = 0.5) +
+    ggplot(aes(x = time, y = value, colour = replicate, size = replicate)) +
+    geom_line() +
     scale_color_manual(values =  palette, 
-                       name = "Replicates") +
-    labs(x = "Time", y = ylab) + 
-    geom_line(data = mean_df, aes(x = time, y = value), 
-              colour = "black", inherit.aes = FALSE)
+                       name = "") +
+    scale_size_manual(values = lwd, name = "") +
+    theme_classic() +
+    labs(x = "Time", y = ylab, title = paste("Competition:", unique(plot_df$competition),
+                                             "- Selection:", unique(plot_df$selection)))
   
 }
 
+#' Plot tip trait distribution across replicates for a single competition x selection combination
+#'
+#' @param x an object or list of objects of class `cs_result_summaries`. Must have replicate details recorded.
+#'
+#' @return a plot of tip trait distributions
+#' @export
+#' @import ggplot2
+plot_tip_trait_distribution_replicates <- function(x) {
+  
+  plot_df <- plot_tip_traits_df(x)
+  
+  if (! "replicate" %in% names(plot_df)) {
+    usethis::ui_stop("No recorded replicate information to plot")
+  }
+  if (length(unique(paste0(plot_df$competition, plot_df$selection))) > 1) {
+    usethis::ui_stop("More than one competition x selection combination detected in data. This plot is designed for replicates of a single competition x selection combination")
+  }
+  
+  mean_df <- plot_df %>%
+    dplyr::mutate(replicate = as.factor("mean"))
+  
+  plot_df <- dplyr::mutate(plot_df, replicate = as.factor(.data$replicate)) %>%
+    dplyr::bind_rows(mean_df) 
+
+  
+  rep_n <- length(levels(plot_df$replicate)) - 2
+  palette <- c(rep("grey", rep_n), 
+               harrypotter::hp(n = 6, option = "Ravenclaw")[2],
+               "black")
+  lwd <- c(rep(0.4, rep_n), 0.7, 1.1)
+  
+  plot_df %>%
+    ggplot(aes(x = tip_values, colour = replicate)) +
+    geom_density(, alpha = 0.7) +
+    geom_vline(xintercept = 0, color = "red", linetype = "dashed") +
+    scale_color_manual(values =  palette, 
+                       name = "") +
+    scale_size_manual(values = lwd, name = "") +
+    theme_classic()
+}
 
 
 # ---- PLOT Data - preprocess ---- ############################################
+
+plot_tip_traits_df <- function(x){
+  
+  checkmate::assert_class(x, "list")
+  
+  if(inherits(x, "cs_result_summaries")){
+    df <- data.frame(tip_values = x$tip_traits, 
+                     competition = x$competition,
+                     selection = x$selection)
+    
+    return(df)
+  }
+  
+  res_class <- sapply(x, FUN = function(i){inherits(i, "cs_result_summaries")})
+  res_class_n <- sum(res_class)
+  
+  if(sum(!res_class) == length(x)){
+    usethis::ui_stop("No objects of class cs_result_summaries in {usethis::ui_field('x')}")
+  }
+  
+  if(res_class_n != length(x)){
+    usethis::ui_warn("{res_class_n} of {length(x)} elements of {usethis::ui_field('x')} not objects of class cs_result_summaries. Ignored")
+  }
+  
+  l_df <- lapply(x[res_class], function(i){
+    data.frame(tip_values = i$tip_traits, competition = i$competition,
+               selection = i$selection, replicate = i$replicate)
+  })
+  return(do.call(rbind, l_df))
+}
 
 prep_time_plot_df <- function(x, variable = "VAR") {
   
