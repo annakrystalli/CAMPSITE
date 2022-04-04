@@ -4,13 +4,15 @@
 \alias{plot.cs_sim_results}
 \title{Plot CAMPSITE simulation results}
 \usage{
-\method{plot}{cs_sim_results}(x, ylims = NULL)
+\method{plot}{cs_sim_results}(x, ylims = NULL, incipient_col = "red")
 }
 \arguments{
 \item{x}{results object of class "cs_sim_results" output from \code{sim_CAMPSITE}.}
 
 \item{ylims}{numeric vector of length 2 specifying limits for the y axis. If
 \code{NULL} (default), limits are determined automatically}
+
+\item{incipient_col}{incipient lineage colour}
 }
 \value{
 plot of simulated lineage evolution across trait space
