@@ -16,16 +16,16 @@
 #' plot(res)                   
 #' }
 #'
-plot.cs_sim_results <- function(x, ylims = NULL) {
+plot.cs_sim_results <- function(x, ylims = NULL, incipient_col = "red") {
   if(!x$full_results){
     stop("No lineage and trait data available to plot")
   }
   cs_plot_trait_evolution(x$traits, x$lineages, x$t_end, x$step_size, 
-                          ylims = ylims)
+                          ylims = ylims, incipient_col = incipient_col)
 }
 
 
-cs_plot_trait_evolution <- function(traits, lineages, t, step_size, ylims = NULL) {
+cs_plot_trait_evolution <- function(traits, lineages, t, step_size, ylims = NULL, incipient_col) {
   # plots a simulation, with incipient lineages in red, good in black
   lineages[lineages[, "end_time"] < 0, "end_time"] <- t
   
@@ -59,7 +59,7 @@ cs_plot_trait_evolution <- function(traits, lineages, t, step_size, ylims = NULL
   
   opacity <- 0.6
   colg <- scales::alpha("black", opacity)
-  coli <- scales::alpha("red", opacity)
+  coli <- scales::alpha(incipient_col, opacity)
   
   
   completion <- lineages[, "spec_or_ext_ct"] #extract vector of speciation or extinction times for each lineage

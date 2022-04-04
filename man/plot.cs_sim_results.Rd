@@ -4,7 +4,7 @@
 \alias{plot.cs_sim_results}
 \title{Plot CAMPSITE simulation results}
 \usage{
-\method{plot}{cs_sim_results}(x, ylims = NULL)
+\method{plot}{cs_sim_results}(x, ylims = NULL, incipient_col = "red")
 }
 \arguments{
 \item{x}{results object of class "cs_sim_results" output from \code{sim_CAMPSITE}.}
