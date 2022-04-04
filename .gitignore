@@ -3,3 +3,4 @@
 .RData
 .Ruserdata
 attic/*
+.DS_Store
