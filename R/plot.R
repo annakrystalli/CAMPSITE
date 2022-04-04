@@ -413,6 +413,99 @@ plot_tip_trait_distribution_replicates <- function(x) {
     theme_classic()
 }
 
+#' Species richness across replicates for a single competition x selection combination
+#'
+#' @param x an object or list of objects of class `cs_result_summaries`. Must have replicate details recorded.
+#'
+#' @return a plot of species richness through time
+#' @export
+#' @import ggplot2
+plot_lineages_through_time_replicates <- function(x) {
+  
+  
+  checkmate::assert_class(x, "list")
+  
+  if(inherits(x, "cs_result_summaries")){
+    x <- list(x)
+  }
+  
+  plot_df <- lapply(x, prep_lineages_div) %>%
+    mapply(function(x, y) {tibble::add_column(x, sim = y)}, 
+           ., seq_along(.), SIMPLIFY = FALSE) %>%
+    do.call(rbind, .) %>%
+    tidyr::drop_na(.data$spec_ct) 
+  
+  
+  if (! "replicate" %in% names(plot_df)) {
+    usethis::ui_stop("No recorded replicate information to plot")
+  }
+  if (length(unique(paste0(plot_df$competition, plot_df$selection))) > 1) {
+    usethis::ui_stop("More than one competition x selection combination detected in data. This plot is designed for replicates of a single competition x selection combination")
+  }
+  
+  tree_df <- lapply(x, prep_trees_div) %>%
+    mapply(function(x, y) {tibble::add_column(x, sim = y)}, 
+           ., seq_along(.), SIMPLIFY = FALSE) %>%
+    do.call(rbind, .) 
+  
+  
+  plot_df_spec <- plot_df %>%
+    dplyr::mutate(time_bin = as.integer(.data$spec_ct)  + 1L) %>% 
+    dplyr::group_by(.data$competition, .data$selection, .data$sim, .data$time_bin, .data$replicate) %>%
+    dplyr::summarise(rate = dplyr::n()) %>%
+    tibble::add_column(process = "speciation") %>%
+    dplyr::ungroup()
+  
+  
+  plot_df_ext <- plot_df %>%
+    dplyr::filter(.data$status == -2) %>%
+    dplyr::mutate(time_bin = as.integer(.data$spec_ct)  + 1L) %>% 
+    dplyr::group_by(.data$competition, .data$selection, .data$sim, .data$time_bin, .data$replicate) %>%
+    dplyr::summarise(rate = dplyr::n()) %>%
+    tibble::add_column(process = "extinction")
+  
+  lin_df_div <- rbind(plot_df_spec, plot_df_ext) %>%
+    tidyr::spread(key = .data$process, value = .data$rate, fill = 0) %>%
+    dplyr::left_join(tree_df, by = c("sim", "time_bin", "replicate")) %>%
+    dplyr::mutate(speciation = .data$speciation / .data$branch_len,
+                  extinction = .data$extinction / .data$branch_len,
+                  diversification = .data$speciation - .data$extinction,
+                  turnover = tidyr::replace_na(
+                    dplyr::na_if(.data$extinction / .data$speciation, Inf), 0)) %>%
+    dplyr::mutate(speciation = .data$speciation * .data$branch_len,
+                  extinction = .data$extinction * .data$branch_len,
+                  diversification = .data$speciation - .data$extinction,
+                  replicate = as.factor(replicate)) %>%
+    dplyr::arrange(.data$replicate, .data$time_bin) %>%
+    dplyr::group_by(.data$replicate) %>%
+    dplyr::mutate(richness = cumsum(.data$diversification)) 
+    
+  
+  lin_df_div <- dplyr::bind_rows(lin_df_div,
+                   dplyr::group_by(lin_df_div, .data$replicate, .data$time_bin) %>%
+                     dplyr::summarise(richness = mean(.data$richness, na.rm = TRUE)) %>%
+                     dplyr::mutate(replicate = as.factor("mean")))
+  
+  
+  rep_n <- length(levels(lin_df_div$replicate)) - 2
+  palette <- c(rep("grey", rep_n), 
+               harrypotter::hp(n = 6, option = "Ravenclaw")[2],
+               "black")
+  lwd <- c(rep(0.4, rep_n), 0.7, 1.1)
+  
+ lin_df_div %>%
+    ggplot(aes(x = as.numeric(time_bin), y = richness, colour = replicate)) +
+    geom_smooth(aes(group = as.factor(sim)), colour = "light grey", se = F, alpha = 0.1, size = .2) +
+    geom_smooth(se = F) +
+    scale_y_continuous(trans = "log", breaks = c(0, 1, 10, 100)) +
+   scale_color_manual(values =  palette, 
+                      name = "") +
+   scale_size_manual(values = lwd, name = "") +
+    labs(x = "Time", y = "Richness") +
+    theme(axis.text.x = element_blank()) +
+   theme_classic()
+}
+
 
 # ---- PLOT Data - preprocess ---- ############################################
 
