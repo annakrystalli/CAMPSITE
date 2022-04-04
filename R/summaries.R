@@ -97,10 +97,10 @@ sumBL <- function(x){
     if (i < round(max.bl - 1)) {
       bl[[i + 1]] <- sum(adephylo::distRoot(
         paleotree::timeSliceTree(tree, i, plot = F), method = "patristic")) -
-        sum(adephylo::distRoot(paleotree::timeSliceTree(tree, i + 1, plot = F), 
+        sum(adephylo::distRoot(suppressWarnings(paleotree::timeSliceTree(tree, i + 1, plot = F)), 
                                method = "patristic"))
     } else {
-      bl[[i+1]] <- sum(adephylo::distRoot(paleotree::timeSliceTree(tree, i, plot = F),
+      bl[[i+1]] <- sum(adephylo::distRoot(suppressWarnings(paleotree::timeSliceTree(tree, i, plot = F)),
                                           method = "patristic")) + 1*(ceiling(max.bl)-max.bl)
     }
   }
