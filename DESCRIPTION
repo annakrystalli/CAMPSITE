@@ -12,7 +12,6 @@ Imports:
     checkmate,
     harrypotter,
     ggplot2,
-    ggpubr,
     stringr,
     usethis,
     magrittr,
@@ -26,6 +25,7 @@ Imports:
     scales
 Suggests: 
     cowplot,
+    ggpubr,
     geiger,
     Hmisc,
     apTreeshape,
