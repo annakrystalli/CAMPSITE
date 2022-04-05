@@ -7,6 +7,7 @@ Authors@R:
       person("Anna", "Krystalli", , "annakrystalli@googlemail.com", role = "aut",
            comment = c(ORCID = "0000-0002-2378-4915")))
 Description: What the package does (one paragraph).
+Depends: R (>= 3.5.0)
 Imports: 
     ape,
     checkmate,
