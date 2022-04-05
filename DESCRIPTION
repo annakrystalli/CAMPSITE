@@ -10,11 +10,6 @@ Description: What the package does (one paragraph).
 Imports: 
     ape,
     checkmate,
-    doParallel,
-    RPANDA,
-    motmot,
-    foreach,
-    phytools,
     harrypotter,
     ggplot2,
     ggpubr,

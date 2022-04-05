@@ -152,19 +152,14 @@ cs_simulate <- function (pars, ou = list(opt = NULL, alpha4 = NULL), root.value 
 #' @return The function is intended to write results out to disk so results are returned invisibly. 
 #'  Output is a list with one element for each replicate. Each simulation result is an object of class `cs_sim_results`
 #' @export
-#' @importFrom foreach %dopar%
 cs_simulate_reps <- function(pars, ou = list(opt = NULL, alpha4 = NULL), root.value = 0, age.max = 50, 
                         age.ext = NULL, step_size = 0.01, bounds = c(-Inf, Inf), 
                         plot = TRUE, ylims = NULL, full_results = TRUE,
                         out_filepath = NULL, max_rep = 100, ensure_valid = FALSE){
 
-  # cores <- parallel::detectCores()
-  # cl <- parallel::makeCluster(cores[1]-1) #not to overload your computer
-  # doParallel::registerDoParallel(cl)
   
   usethis::ui_info("Cluster registered. Initiating simulation replicates \n")
-  #pb <- progress::progress_bar$new(total = max_rep, show_after = 0,
-  #                                 clear = TRUE)
+
    replicates <- list()
    for (i in 1:max_rep) {
     usethis::ui_info("COMPETITION: {usethis::ui_value(pars$alpha1)} -  SELECTION {usethis::ui_value(pars$alpha3)} --- replicate: {usethis::ui_value(i)} of {max_rep} \n")
@@ -173,7 +168,7 @@ cs_simulate_reps <- function(pars, ou = list(opt = NULL, alpha4 = NULL), root.va
                                         age.ext = age.ext, step_size = step_size, bounds = bounds, 
                                         plot = plot, ylims = ylims, full_results = full_results) 
     
-      #pb$tick()
+
       if (ensure_valid) {
         if (!sim$process_dead && sim$trees$gsp_extant$tree$Nnode > 4) {
           usethis::ui_done("Valid replicate {usethis::ui_value(i)} obtained \n\n\n")
@@ -187,7 +182,6 @@ cs_simulate_reps <- function(pars, ou = list(opt = NULL, alpha4 = NULL), root.va
      sim$replicate <- i
      replicates[[i]] <- sim
   }
-  # parallel::stopCluster(cl)
   
   usethis::ui_done("Replicate simulation complete \n")
   if(!is.null(out_filepath)){
