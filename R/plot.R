@@ -508,6 +508,108 @@ plot_lineages_through_time_replicates <- function(x) {
 }
 
 
+
+#' Plot replicate diversification rates against time for a single competition x selection combination
+#'
+#' @param x an object or list of objects of class `cs_result_summaries`.
+#' @return plot of replicate diversification rates against time
+#' @export
+#' @import ggplot2
+plot_diversification_replicates <- function(x) {
+  
+  checkmate::assert_class(x, "list")
+  
+  if(inherits(x, "cs_result_summaries")){
+    x <- list(x)
+  }
+  
+  plot_df <- lapply(x, prep_lineages_div) %>%
+    mapply(function(x, y) {tibble::add_column(x, sim = y)}, 
+           ., seq_along(.), SIMPLIFY = FALSE) %>%
+    do.call(rbind, .) %>%
+    tidyr::drop_na(.data$spec_ct) 
+  
+  
+  if (! "replicate" %in% names(plot_df)) {
+    usethis::ui_stop("No recorded replicate information to plot")
+  }
+  if (length(unique(paste0(plot_df$competition, plot_df$selection))) > 1) {
+    usethis::ui_stop("More than one competition x selection combination detected in data. This plot is designed for replicates of a single competition x selection combination")
+  }
+  
+  tree_df <- lapply(x, prep_trees_div) %>%
+    mapply(function(x, y) {tibble::add_column(x, sim = y)}, 
+           ., seq_along(.), SIMPLIFY = FALSE) %>%
+    do.call(rbind, .) 
+  
+  
+  plot_df_spec <- plot_df %>%
+    dplyr::mutate(time_bin = as.integer(.data$spec_ct)  + 1L) %>% 
+    dplyr::group_by(.data$replicate, .data$time_bin) %>%
+    dplyr::summarise(rate = dplyr::n()) %>%
+    tibble::add_column(process = "speciation") %>%
+    dplyr::ungroup()
+  
+  
+  plot_df_ext <- plot_df %>%
+    dplyr::filter(.data$status == -2) %>%
+    dplyr::mutate(time_bin = as.integer(.data$spec_ct)  + 1L) %>% 
+    dplyr::group_by(.data$replicate, .data$time_bin) %>%
+    dplyr::summarise(rate = dplyr::n()) %>%
+    tibble::add_column(process = "extinction")
+  
+  lin_df_div <- rbind(plot_df_spec, plot_df_ext) %>%
+    tidyr::spread(key = .data$process, value = .data$rate, fill = 0) %>%
+    dplyr::left_join(tree_df, by = c("replicate", "time_bin")) %>%
+    dplyr::mutate(speciation = .data$speciation / .data$branch_len,
+                  extinction = .data$extinction / .data$branch_len,
+                  diversification = .data$speciation - .data$extinction,
+                  turnover = tidyr::replace_na(
+                    dplyr::na_if(.data$extinction / .data$speciation, Inf), 0)) %>%
+    tidyr::gather("process", "rate", c(.data$extinction, .data$speciation, 
+                                       .data$diversification)) %>%
+    dplyr::mutate(process = factor(.data$process, levels = c("speciation", "extinction", 
+                                                             "diversification")),
+                  replicate = as.factor(.data$replicate))
+  
+  
+  lin_df_div <- dplyr::bind_rows(lin_df_div,
+    dplyr::group_by(lin_df_div, .data$time_bin,.data$process) %>%
+    dplyr::summarise(rate = mean(.data$rate, na.rm = TRUE)) %>%
+    tibble::add_column(replicate = as.factor("mean")) %>%
+    dplyr::ungroup()) %>%
+    dplyr::arrange(.data$replicate, .data$process, .data$time_bin)
+  
+  rep_n <- length(levels(lin_df_div$replicate)) - 2
+  alphas <- c(rep(0.3, rep_n), 0.7, 1)
+  palette <- harrypotter::hp(n = 9, option = "Ravenclaw")[c(1, 5, 9)] %>%
+    lapply(scales::alpha, alpha = alphas) %>%
+    unlist()
+  lwd <- rep(c(rep(0.4, rep_n), 0.7, 1.1), 3)
+  lty <- rep(c(rep(2, rep_n + 1), 1), 3)
+  
+  lin_df_div %>%
+    ggplot(aes(x = as.numeric(time_bin), y = rate, 
+               color = interaction(process, 
+                                   replicate, 
+                                   sep=" - ", 
+                                   lex.order = TRUE),
+               size = interaction(process, 
+                                  replicate, 
+                                  sep=" - ", 
+                                  lex.order = TRUE),
+               linetype = interaction(process, 
+                                      replicate, 
+                                      sep=" - ", 
+                                      lex.order = TRUE))) +
+    geom_line() +
+    scale_color_manual(values = palette, name = "Process") +
+    scale_size_manual(values = lwd, name = "Process") +
+    scale_linetype_manual(values = lty, name = "Process") +
+    labs(x = "Time", y = "Rate") +
+    theme_classic()  
+}
+
 # ---- PLOT Data - preprocess ---- ############################################
 
 plot_tip_traits_df <- function(x){
