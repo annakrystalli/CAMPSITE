@@ -26,7 +26,8 @@ plot.cs_sim_results <- function(x, ylims = NULL, incipient_col = "red") {
 }
 
 
-cs_plot_trait_evolution <- function(traits, lineages, t, step_size, ylims = NULL, incipient_col) {
+cs_plot_trait_evolution <- function(traits, lineages, t, step_size, ylims = NULL, 
+                                    incipient_col = "red") {
   # plots a simulation, with incipient lineages in red, good in black
   lineages[lineages[, "end_time"] < 0, "end_time"] <- t
   
@@ -636,7 +637,7 @@ plot_tip_traits_df <- function(x){
   }
   
   l_df <- lapply(x[res_class], function(i){
-    data.frame(tip_values = i$tip_traits, competition = i$competition,
+    tibble::tibble(tip_values = i$tip_traits, competition = i$competition,
                selection = i$selection, replicate = i$replicate)
   })
   return(do.call(rbind, l_df))
