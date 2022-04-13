@@ -464,7 +464,18 @@ plot_lineages_through_time_replicates <- function(x) {
     dplyr::mutate(time_bin = as.integer(.data$spec_ct)  + 1L) %>% 
     dplyr::group_by(.data$competition, .data$selection, .data$sim, .data$time_bin, .data$replicate) %>%
     dplyr::summarise(rate = dplyr::n()) %>%
-    tibble::add_column(process = "extinction")
+    tibble::add_column(process = "extinction") %>%
+    dplyr::ungroup()
+    
+    # add empty row with zero extinction rate to ensure extinction column exists
+    # when spreading data
+    if (nrow(plot_df_ext) == 0) {
+      plot_df_ext <- tibble::add_row(plot_df_ext, 
+                                     replicate = 1, 
+                                     time_bin = 1, 
+                                     rate = 0,
+                                     process = "extinction")
+    }
   
   lin_df_div <- rbind(plot_df_spec, plot_df_ext) %>%
     tidyr::spread(key = .data$process, value = .data$rate, fill = 0) %>%
