@@ -16,6 +16,7 @@ knitr::opts_chunk$set(
 # CAMPSITE
 
 <!-- badges: start -->
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
 The goal of CAMPSITE is to run simulation using the Competition And Multiple-Peak Selection Integrated Trait Evolution (CAMPSITE) model in R.
@@ -195,5 +196,6 @@ plot_diversification_replicates(rep_summaries)
 plot_lineages_through_time_replicates(rep_summaries)
 
 ```
+
 
 
