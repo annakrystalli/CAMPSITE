@@ -557,7 +557,18 @@ plot_diversification_replicates <- function(x) {
     dplyr::mutate(time_bin = as.integer(.data$spec_ct)  + 1L) %>% 
     dplyr::group_by(.data$replicate, .data$time_bin) %>%
     dplyr::summarise(rate = dplyr::n()) %>%
-    tibble::add_column(process = "extinction")
+    tibble::add_column(process = "extinction") %>%
+    dplyr::ungroup()
+  
+  # add empty row with zero extinction rate to ensure extinction column exists
+  # when spreading data
+  if (nrow(plot_df_ext) == 0) {
+    plot_df_ext <- tibble::add_row(plot_df_ext, 
+                                   replicate = 1, 
+                                   time_bin = 1, 
+                                   rate = 0,
+                                   process = "extinction")
+  }
   
   lin_df_div <- rbind(plot_df_spec, plot_df_ext) %>%
     tidyr::spread(key = .data$process, value = .data$rate, fill = 0) %>%
@@ -573,13 +584,15 @@ plot_diversification_replicates <- function(x) {
                                                              "diversification")),
                   replicate = as.factor(.data$replicate))
   
-  
+  # calculate means
   lin_df_div <- dplyr::bind_rows(lin_df_div,
     dplyr::group_by(lin_df_div, .data$time_bin,.data$process) %>%
     dplyr::summarise(rate = mean(.data$rate, na.rm = TRUE)) %>%
     tibble::add_column(replicate = as.factor("mean")) %>%
     dplyr::ungroup()) %>%
     dplyr::arrange(.data$replicate, .data$process, .data$time_bin)
+  
+  # set plotting parameters
   
   rep_n <- length(levels(lin_df_div$replicate)) - 2
   alphas <- c(rep(0.3, rep_n), 0.7, 1)
