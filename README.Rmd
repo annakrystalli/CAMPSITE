@@ -4,7 +4,7 @@ output: github_document
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-```{r, include = FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -18,22 +18,182 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of CAMPSITE is to ...
+The goal of CAMPSITE is to run simulation using the Competition And Multiple-Peak Selection Integrated Trait Evolution (CAMPSITE) model in R.
 
 ## Installation
 
 You can install the development version of CAMPSITE like so:
 
 ``` r
-# FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?
+remotes::install_github("annakrystalli/CAMPSITE")
 ```
 
 ## Example
 
 This is a basic example which shows you how to solve a common problem:
 
-```{r example, eval=FALSE}
+```{r load}
 library(CAMPSITE)
 ## basic example code
+set.seed(20220327)
 ```
+
+## Create parameter object
+
+Creates default parameter object. Supply parameter values as arguments to change
+
+```{r pars}
+pars <- cs_pars(lambda1 = 0.3)
+```
+
+
+## Run simulation
+
+```{r sim-w-plot}
+res <- cs_simulate(pars, ou = list(opt = 0, alpha4 = 0), root.value = 0, age.max = 10, 
+                          age.ext = NULL, step_size = 0.01, bounds = c(-Inf, Inf), 
+                          plot = TRUE, ylims = NULL, full_results = TRUE) 
+```
+
+
+## Plot simulation
+
+The default plotting method for the simulation results object plots the simulated evolution of lineages through trait space
+
+
+```{r sim-without-plot}
+
+res2 <- cs_simulate(pars = cs_pars(alpha1 = 0.1), ou = list(opt = NULL, alpha4 = NULL), root.value = 0, age.max = 10, 
+                    age.ext = NULL, step_size = 0.01, bounds = c(-Inf, Inf), 
+                    plot = FALSE, ylims = NULL, full_results = TRUE) 
+```
+
+
+```{r plot-res2}
+plot(res2, incipient_col = harrypotter::hp(n = 6, option = "Ravenclaw")[6])
+```
+
+
+## Summarising results
+
+```{r sum-res}
+res_summaries <- cs_summarise_results(list(res, res2))
+```
+
+## Plotting means of multiple selection x competion combinations
+
+```{r plot-res}
+plot_tip_trait_distribution(res_summaries)
+
+plot_var_vs_time(res_summaries, variable = "VAR", time = "int")
+
+
+plot_var_vs_time(res_summaries, variable = "VAR", time = "step")
+
+# plot individual result
+plot_var_vs_time(cs_summarise_results(res), variable = "VAR", time = "step")
+
+plot_var_vs_time(res_summaries, variable = "MNND", time = "step")
+
+plot_var_vs_time(res_summaries, variable = "VNND", time = "step")
+```
+
+
+
+
+## Simulating over parameter space
+
+### Simulate
+
+The following code runs the replicate (3 for each combination) simulations across all combination of selection and competition values 0, 0.025 and 0.1 and saves the replicates for each combination in an appropriately named file in subdirectory `sims/` of the working directory. 
+
+```{r sim-all, eval = FALSE}
+
+max_rep <- 3
+selection_values <- c(0, 0.025, 0.1)
+competition_values <- c(0, 0.025, 0.1)
+
+params_grid <- tidyr::crossing(selection_values, competition_values)
+
+future.apply::future_mapply(FUN = 
+                              function(selection, competition, max_rep, age.max, ensure_valid, plot) {
+                                cs_simulate_reps(pars = cs_pars(alpha1 = competition, 
+                                                                alpha2 = competition,
+                                                                alpha3 = selection),
+                                                 ou = list(opt = 0, alpha4 = selection),
+                                                 max_rep = max_rep, age.max = age.max,
+                                                 out_filepath = file.path("sims", 
+                                                                          paste0("comp-", competition, 
+                                                                                 "_selec-", selection, 
+                                                                                 "_reps-", max_rep, 
+                                                                                 "_", Sys.Date(),
+                                                                                 ".rds")),
+                                                 ensure_valid = ensure_valid, plot = plot)
+                              }, 
+                            competition = params_grid$competition_values, 
+                            selection = params_grid$selection_values, 
+                            MoreArgs = list(
+                              max_rep = max_rep,
+                              age.max = 20,
+                              ensure_valid = TRUE,
+                              plot = FALSE),
+                            future.seed=TRUE)
+
+
+```
+
+### Summarise
+
+Summarise all simluation results
+
+```{r sum-all, eval = FALSE}
+summaries <- list.files(file.path("sims"), full.names = TRUE) %>%
+  future.apply::future_lapply(FUN = function(x){
+    readRDS(x) %>% cs_summarise_results
+  }) %>% unlist(recursive = FALSE)
+
+
+
+```
+
+
+
+
+
+## Plotting means and replicates of a single selection x competion combinations
+
+### Load and summarise replicates of a single selection x competion combinations
+
+
+```{r sum-rep}
+rep_filepath <- list.files(system.file("sims", package = "CAMPSITE"), 
+                        full.names = TRUE)[1]
+rep_filepath
+
+rep_summaries <- rep_filepath %>%
+  future.apply::future_lapply(FUN = function(x){
+    readRDS(x) %>% cs_summarise_results }) %>% 
+  unlist(recursive = FALSE)
+
+```
+
+
+
+
+```{r plot-rep, message=FALSE, warning=FALSE}
+plot_tip_trait_distribution_replicates(rep_summaries)
+
+plot_var_vs_time_replicates(rep_summaries, variable = "VAR")
+
+
+plot_var_vs_time_replicates(rep_summaries, variable = "MNND")
+
+plot_var_vs_time_replicates(rep_summaries, variable = "VNND")
+
+plot_diversification_replicates(rep_summaries)
+
+plot_lineages_through_time_replicates(rep_summaries)
+
+```
+
 
