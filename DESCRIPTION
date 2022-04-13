@@ -1,12 +1,15 @@
 Package: CAMPSITE
 Title: Run simulation using the Competition And Multiple-Peak Selection Integrated Trait Evolution (CAMPSITE) model in R
-Version: 0.0.0.9002
+Version: 0.0.0.9003
 Authors@R: 
     c(person("Alex", "Slavenko", , "gluttony14@gmail.com", role = c("aut", "cre"),
-           comment = c(ORCID = "")),
+           comment = c(ORCID = "0000-0002-3265-7715")),
       person("Anna", "Krystalli", , "annakrystalli@googlemail.com", role = "aut",
            comment = c(ORCID = "0000-0002-2378-4915")))
-Description: What the package does (one paragraph).
+Description: Simulates evolution under the CAMPSITE model, with user-specified 
+  parameters for strengths of inter-specific competition and selection. Also 
+  includes functions to run a variety of analyses of diversification and 
+  trait evolution dynamics on simulated datasets.
 Depends: R (>= 3.5.0)
 Imports: 
     ape,
